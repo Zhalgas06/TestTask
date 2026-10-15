@@ -4,11 +4,22 @@ using UnityEngine.InputSystem;
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
 public class MeshController : MonoBehaviour
 {
+    [Header("Brush Controlls")]
+    [SerializeField]
+    [Range(0f, 100f)]
+    private float brushSize = 10;
+    [SerializeField]
+    [Range(-50f, 50f)]
+    private int brushStrength = 10;
+
+    [Header("Mesh Details")]
     [SerializeField]
     private int vertexCount = 100;
 
     [SerializeField]
     private int distanceBetweenVertexes = 5;
+
+
 
     private Mesh mesh;
     private MeshFilter meshFilter;
@@ -86,18 +97,40 @@ public class MeshController : MonoBehaviour
 
     private void Update()
     {
-        if (Mouse.current == null)
+        if (Keyboard.current == null || Mouse.current == null)
             return;
 
-        if (Mouse.current.leftButton.wasPressedThisFrame)
+        if (Keyboard.current.spaceKey.isPressed)
         {
-            heightMap[50, 50]++;
-            UpdateHeightMap();
+            AddMaterial(50, 50);
         }
-        else if (Mouse.current.rightButton.wasPressedThisFrame)
+
+        float scroll = Mouse.current.scroll.ReadValue().y;
+
+        if (scroll != 0f)
         {
-            heightMap[50, 50]--;
-            UpdateHeightMap();
+            brushSize += Mathf.Sign(scroll) * 1f;
+            brushSize = Mathf.Clamp(brushSize, 0.1f, 100f);
         }
+    }
+
+
+    private void AddMaterial(int brushCenterX, int brushCenterZ)
+    {
+        for (int i = 0; i < vertexCount; i++)
+        {
+            for (int j = 0; j < vertexCount; j++)
+            {
+                float xDifference = vertices[i * vertexCount + j].x - vertices[i * vertexCount + brushCenterX].x;
+                float zDifference = vertices[i * vertexCount + j].z - vertices[brushCenterZ * vertexCount + j].z;
+
+                if (xDifference * xDifference + zDifference * zDifference <= brushSize * brushSize)
+                {
+                    heightMap[i, j] = heightMap[i, j] + brushStrength * Time.deltaTime;
+                }
+            }
+        }
+
+        UpdateHeightMap();
     }
 }

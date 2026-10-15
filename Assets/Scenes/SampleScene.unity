@@ -222,6 +222,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0bc720e9701bf9849bba423aa608c354, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MeshController
+  brushSize: 15
+  brushStrength: 10
   vertexCount: 100
   distanceBetweenVertexes: 1
 --- !u!1 &330585543
