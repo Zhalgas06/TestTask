@@ -9,11 +9,9 @@ public class MeshController : MonoBehaviour
     [Range(0f, 100f)]
     private float brushSize = 10;
     [SerializeField]
-    [Range(-20f, 20f)]
     private int brushStrength = 10;
 
     [SerializeField]
-    [Range(0f, 20f)]
     private float brushMoveSpeed = 10f;
 
     private float brushX;
@@ -114,7 +112,11 @@ public class MeshController : MonoBehaviour
 
         if (Keyboard.current.spaceKey.isPressed)
         {
-            AddMaterial(Mathf.RoundToInt(brushX), Mathf.RoundToInt(brushZ));
+            AddContinuousMaterial();
+        }
+        else
+        {
+            hasPreviousBrushPosition = false;
         }
 
         if (Keyboard.current.fKey.isPressed)
@@ -132,7 +134,7 @@ public class MeshController : MonoBehaviour
     }
 
 
-    private void AddMaterial(int brushCenterX, int brushCenterZ)
+    private void AddMaterial(int brushCenterX, int brushCenterZ, int steps)
     {
         for (int i = 0; i < vertexCount; i++)
         {
@@ -143,7 +145,7 @@ public class MeshController : MonoBehaviour
 
                 if (xDifference * xDifference + zDifference * zDifference <= brushSize * brushSize)
                 {
-                    heightMap[i, j] = heightMap[i, j] + brushStrength * Time.deltaTime;
+                    heightMap[i, j] = heightMap[i, j] + brushStrength * Time.deltaTime / steps;
                 }
             }
         }
@@ -173,5 +175,33 @@ public class MeshController : MonoBehaviour
     {
         System.Array.Clear(heightMap, 0, heightMap.Length);
         UpdateHeightMap();
+    }
+
+    private Vector2 previousBrushPosition;
+    private bool hasPreviousBrushPosition;
+    private void AddContinuousMaterial()
+    {
+        Vector2 currentPosition = new Vector2(brushX, brushZ);
+
+        if (!hasPreviousBrushPosition)
+        {
+            previousBrushPosition = currentPosition;
+            hasPreviousBrushPosition = true;
+        }
+
+        float distance = Vector2.Distance(previousBrushPosition, currentPosition);
+
+        float step = Mathf.Max(0.5f, brushSize * 0.5f);
+
+        int steps = Mathf.Max(1, Mathf.CeilToInt(distance / step));
+
+        for (int i = 1; i <= steps; i++)
+        {
+            Vector2 position = Vector2.Lerp(previousBrushPosition, currentPosition, (float)i / steps);
+
+            AddMaterial(Mathf.RoundToInt(position.x), Mathf.RoundToInt(position.y), steps);
+        }
+
+        previousBrushPosition = currentPosition;
     }
 }
