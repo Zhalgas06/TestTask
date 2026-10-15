@@ -11,12 +11,15 @@ public class MeshController : MonoBehaviour
     [SerializeField]
     private float brushMoveSpeed = 10f;
 
-    [SerializeField] private float baseRadius = 1f;
-    [SerializeField] private float radiusAmplitude = 0.3f;
+    [SerializeField] private float baseRadius = 10f;
+    [SerializeField] private float radiusAmplitude = 3f;
     [SerializeField] private float radiusFrequency = 1f;
 
     [SerializeField]
     private AnimationCurve radiusCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
+    [SerializeField]
+    private Transform brushSphere;
+
     private float brushSize = 10;
 
     private float radiusTimer;
@@ -142,7 +145,6 @@ public class MeshController : MonoBehaviour
             }
         }
 
-        UpdateHeightMap();
     }
 
 
@@ -161,6 +163,17 @@ public class MeshController : MonoBehaviour
         brushX = Mathf.Clamp(brushX + direction.x * brushMoveSpeed * Time.deltaTime, 0f, vertexCount - 1);
 
         brushZ = Mathf.Clamp(brushZ + direction.y * brushMoveSpeed * Time.deltaTime, 0f, vertexCount - 1);
+
+        if (brushSphere != null)
+        {
+            int i = Mathf.Clamp(Mathf.RoundToInt(brushX), 0, vertexCount - 1);
+
+            int j = Mathf.Clamp(Mathf.RoundToInt(brushZ), 0, vertexCount - 1);
+
+            float terrainHeight = heightMap[j, i];
+
+            brushSphere.position = transform.TransformPoint(new Vector3(brushX * distanceBetweenVertexes, terrainHeight, brushZ * distanceBetweenVertexes));
+        }
     }
 
     private void ResetHeightMap()
@@ -193,7 +206,7 @@ public class MeshController : MonoBehaviour
 
             AddMaterial(Mathf.RoundToInt(position.x), Mathf.RoundToInt(position.y), steps);
         }
-
+        UpdateHeightMap();
         previousBrushPosition = currentPosition;
     }
 
@@ -207,5 +220,9 @@ public class MeshController : MonoBehaviour
         brushSize = baseRadius + (curveValue * 2f - 1f) * radiusAmplitude;
 
         brushSize = Mathf.Max(0.1f, brushSize);
+
+        float radiusInWorld = brushSize * distanceBetweenVertexes;
+
+        brushSphere.localScale = Vector3.one * (radiusInWorld * 2f);
     }
 }
