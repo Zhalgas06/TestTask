@@ -6,13 +6,20 @@ public class MeshController : MonoBehaviour
 {
     [Header("Brush Controlls")]
     [SerializeField]
-    [Range(0f, 100f)]
-    private float brushSize = 10;
-    [SerializeField]
     private int brushStrength = 10;
 
     [SerializeField]
     private float brushMoveSpeed = 10f;
+
+    [SerializeField] private float baseRadius = 1f;
+    [SerializeField] private float radiusAmplitude = 0.3f;
+    [SerializeField] private float radiusFrequency = 1f;
+
+    [SerializeField]
+    private AnimationCurve radiusCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
+    private float brushSize = 10;
+
+    private float radiusTimer;
 
     private float brushX;
     private float brushZ;
@@ -109,28 +116,13 @@ public class MeshController : MonoBehaviour
             return;
 
         MoveBrush();
+        UpdateBrushRadius();
 
         if (Keyboard.current.spaceKey.isPressed)
-        {
             AddContinuousMaterial();
-        }
-        else
-        {
-            hasPreviousBrushPosition = false;
-        }
 
         if (Keyboard.current.fKey.isPressed)
-        {
             ResetHeightMap();
-        }
-
-        float scroll = Mouse.current.scroll.ReadValue().y;
-
-        if (scroll != 0f)
-        {
-            brushSize += Mathf.Sign(scroll) * 1f;
-            brushSize = Mathf.Clamp(brushSize, 0.1f, 100f);
-        }
     }
 
 
@@ -203,5 +195,17 @@ public class MeshController : MonoBehaviour
         }
 
         previousBrushPosition = currentPosition;
+    }
+
+    private void UpdateBrushRadius()
+    {
+        radiusTimer += Time.deltaTime * radiusFrequency;
+
+        float t = Mathf.Repeat(radiusTimer, 1f);
+        float curveValue = radiusCurve.Evaluate(t);
+
+        brushSize = baseRadius + (curveValue * 2f - 1f) * radiusAmplitude;
+
+        brushSize = Mathf.Max(0.1f, brushSize);
     }
 }
