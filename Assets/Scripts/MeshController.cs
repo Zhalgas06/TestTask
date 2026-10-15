@@ -9,8 +9,15 @@ public class MeshController : MonoBehaviour
     [Range(0f, 100f)]
     private float brushSize = 10;
     [SerializeField]
-    [Range(-50f, 50f)]
+    [Range(-20f, 20f)]
     private int brushStrength = 10;
+
+    [SerializeField]
+    [Range(0f, 20f)]
+    private float brushMoveSpeed = 10f;
+
+    private float brushX;
+    private float brushZ;
 
     [Header("Mesh Details")]
     [SerializeField]
@@ -31,6 +38,9 @@ public class MeshController : MonoBehaviour
 
     private void Start()
     {
+        brushX = vertexCount / 2;
+        brushZ = vertexCount / 2;
+
         vertexCount++;
         meshFilter = GetComponent<MeshFilter>();
 
@@ -100,9 +110,16 @@ public class MeshController : MonoBehaviour
         if (Keyboard.current == null || Mouse.current == null)
             return;
 
+        MoveBrush();
+
         if (Keyboard.current.spaceKey.isPressed)
         {
-            AddMaterial(50, 50);
+            AddMaterial(Mathf.RoundToInt(brushX), Mathf.RoundToInt(brushZ));
+        }
+
+        if (Keyboard.current.fKey.isPressed)
+        {
+            ResetHeightMap();
         }
 
         float scroll = Mouse.current.scroll.ReadValue().y;
@@ -131,6 +148,30 @@ public class MeshController : MonoBehaviour
             }
         }
 
+        UpdateHeightMap();
+    }
+
+
+    private void MoveBrush()
+    {
+        float x = 0f;
+        float z = 0f;
+
+        if (Keyboard.current.wKey.isPressed) z += 1f;
+        if (Keyboard.current.sKey.isPressed) z -= 1f;
+        if (Keyboard.current.dKey.isPressed) x += 1f;
+        if (Keyboard.current.aKey.isPressed) x -= 1f;
+
+        Vector2 direction = new Vector2(x, z).normalized;
+
+        brushX = Mathf.Clamp(brushX + direction.x * brushMoveSpeed * Time.deltaTime, 0f, vertexCount - 1);
+
+        brushZ = Mathf.Clamp(brushZ + direction.y * brushMoveSpeed * Time.deltaTime, 0f, vertexCount - 1);
+    }
+
+    private void ResetHeightMap()
+    {
+        System.Array.Clear(heightMap, 0, heightMap.Length);
         UpdateHeightMap();
     }
 }
