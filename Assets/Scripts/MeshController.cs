@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
 public class MeshController : MonoBehaviour
@@ -11,28 +12,33 @@ public class MeshController : MonoBehaviour
 
     private Mesh mesh;
     private MeshFilter meshFilter;
-    private MeshRenderer meshRenderer;
 
     private Vector3[] vertices;
     private int[] triangles;
+    private float[,] heightMap;
 
 
     private void Start()
     {
         vertexCount++;
         meshFilter = GetComponent<MeshFilter>();
-        meshRenderer = GetComponent<MeshRenderer>();
 
+        GenerateMesh();
+    }
+
+    private void GenerateMesh()
+    {
         mesh = new Mesh();
-        mesh.name = "New Mesh";
+        mesh.name = "Generated Mesh";
 
         vertices = new Vector3[vertexCount * vertexCount];
+        heightMap = new float[vertexCount, vertexCount];
 
         for (int i = 0; i < vertexCount; i++)
         {
             for (int j = 0; j < vertexCount; j++)
             {
-                vertices[i * vertexCount + j] = new Vector3(j * distanceBetweenVertexes, 0, i * distanceBetweenVertexes);
+                vertices[i * vertexCount + j] = new Vector3(j * distanceBetweenVertexes, heightMap[i, j], i * distanceBetweenVertexes);
             }
         }
 
@@ -60,5 +66,38 @@ public class MeshController : MonoBehaviour
         mesh.RecalculateBounds();
 
         meshFilter.mesh = mesh;
+    }
+
+    private void UpdateHeightMap()
+    {
+        for (int i = 0; i < vertexCount; i++)
+        {
+            for (int j = 0; j < vertexCount; j++)
+            {
+                vertices[i * vertexCount + j].y = heightMap[i, j];
+            }
+        }
+
+        mesh.vertices = vertices;
+        mesh.RecalculateNormals();
+        mesh.RecalculateBounds();
+    }
+
+
+    private void Update()
+    {
+        if (Mouse.current == null)
+            return;
+
+        if (Mouse.current.leftButton.wasPressedThisFrame)
+        {
+            heightMap[50, 50]++;
+            UpdateHeightMap();
+        }
+        else if (Mouse.current.rightButton.wasPressedThisFrame)
+        {
+            heightMap[50, 50]--;
+            UpdateHeightMap();
+        }
     }
 }
